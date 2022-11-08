@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_api_rest/features/start/start_repository.dart';
 import 'package:flutter_api_rest/shared/widgets/app_bar/app_bar_widget.dart';
+import 'package:flutter_api_rest/shared/widgets/post_card_widget.dart';
 import 'package:flutter_api_rest/shared/widgets/text_widget.dart';
 
-import '../../shared/models/author.dart';
 import '../../shared/models/post.dart';
-import '../../shared/widgets/post_card_widget.dart';
 
 class StartPage extends StatefulWidget {
   const StartPage({Key? key}) : super(key: key);
@@ -14,11 +14,42 @@ class StartPage extends StatefulWidget {
 }
 
 class _StartPageState extends State<StartPage> {
+  final repository = StartRepositoryImpl();
+  List<Post> posts = [];
+  var isLoading = false;
+  String? error;
+  //FUTURE -> async, await
+  Future<void> getPosts() async {
+    try {
+      isLoading = true;
+      final response = await repository.getPosts();
+      posts = response;
+      isLoading = false;
+    } catch (e) {
+      isLoading = false;
+      error = e.toString();
+    } finally {
+      setState(() {});
+    }
+  }
+
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBarWidget.start(),
-      body: SingleChildScrollView(
+  void initState() {
+    getPosts();
+    super.initState();
+  }
+
+  Widget mountBody() {
+    if (isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    } else if (error != null) {
+      return Center(
+        child: Text(error!),
+      );
+    } else {
+      return SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Column(
@@ -31,24 +62,19 @@ class _StartPageState extends State<StartPage> {
               const SizedBox(
                 height: 16,
               ),
-              ...List.generate(
-                20,
-                (index) => PostCard(
-                    post: Post(
-                        title: "Lorem Ipsum",
-                        tags: ["Android"],
-                        readTime: "5 min",
-                        photoUrl: "https://picsum.photos/1920/1080",
-                        hasReadLater: false,
-                        author: Author(
-                            id: "id",
-                            name: "Augusto",
-                            profileUrl: "https://picsum.photos/100/100"))),
-              )
+              ...posts.map((e) => PostCard(post: e)).toList()
             ],
           ),
         ),
-      ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBarWidget.start(),
+      body: mountBody(),
     );
   }
 }
