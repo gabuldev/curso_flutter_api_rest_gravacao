@@ -12,7 +12,7 @@ class LogInterceptor implements InterceptorsWrapper {
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) {
     log("RES- [${response.statusCode}]${response.requestOptions.path}");
-    handler.resolve(response);
+    handler.next(response);
   }
 
   @override
